@@ -19,20 +19,13 @@ Currently the project structure is simple:
     .
     ├── bootstrap
     │   ├── linux
-    │   │   └── setup_puppet.ps1
+    │   │   └── ...
     │   └── windows
-    │       ├── config.ps1
-    │       ├── create_user.ps1
-    │       ├── init.bat
-    │       ├── setup_openvpn.ps1
-    │       ├── setup_puppet.ps1
-    │       ├── setup_ssh_rsync.ps1
-    │       ├── transcript_example.ps1
-    │       └── utils.ps1
+    │       ├── ...
     └── README.md
 
 The "bootstrap" directory contains all bootstrapping scripts. Scripts aimed at 
-bootstrapping Linux (or *NIX) nodes are under "linux" and are typically (but not 
+bootstrapping Linux (or \*NIX) nodes are under "linux" and are typically (but not 
 necessarily) written with sh shell in mind.
 
 Powershell scripts and batch files used for bootstrapping Windows nodes are 
