@@ -7,20 +7,36 @@
 # Exit on any error
 set -e
 
+usage() {
+    echo "Usage: install-puppet.sh [-n <hostname>] [-e <puppet env>] [-s] [-h]"
+    echo
+    echo "Options:"
+    echo "    -n    hostname to set (default: do not set hostname)"
+    echo "    -e    puppet agent environment (default: production)"
+    echo "    -s    enable and start puppet agent (default: no)"
+    echo "    -h    show this help"
+    echo
+    exit 2
+}
+
+# Default settings
+HOST_NAME="false"
+PUPPET_ENV="production"
+START_AGENT="false"
+
+while getopts 'n:e:sh' arg
+do
+  case $arg in
+    n) HOST_NAME=$OPTARG ;;
+    e) PUPPET_ENV=$OPTARG ;;
+    s) START_AGENT="true" ;;
+    h) usage ;;
+  esac
+done
+
 export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/opt/puppetlabs/bin:/opt/puppetlabs/puppet/bin
 
 CWD=`pwd`
-
-validate_params() {
-    if [ "$1" = "" ]; then
-      echo "ERROR: hostname not given as the first parameter!"
-      exit 1
-    fi
-    if [ "$2" = "" ]; then
-      echo "ERROR: puppet agent environment not given as the second parameter!"
-      exit 1
-    fi
-}
 
 set_hostname() {
     hostnamectl set-hostname $1
@@ -129,10 +145,13 @@ run_puppet_agent() {
     systemctl start puppet
 }
 
-validate_params $1 $2
-set_hostname $1
+if [ "${HOST_NAME}" != "false" ]; then
+    set_hostname $HOST_NAME
+fi
 detect_osfamily
 install_dependencies
 setup_puppet
-set_puppet_agent_environment $2
-run_puppet_agent
+set_puppet_agent_environment $PUPPET_ENV
+if [ "${START_AGENT}" = "true" ]; then
+    run_puppet_agent
+fi
