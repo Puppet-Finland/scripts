@@ -53,6 +53,20 @@ remove_devel_packages_centos7() {
     fi
 }
 
+# Elevate privileges automatically if needed (e.g. in Terraform provisioning)
+#
+if [ `whoami` != 'root' ]; then
+  echo "Not root, copying this script elsewhere and running it with sudo."
+
+  # https://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
+  SCRIPT=$(readlink -f $0)
+  TMPPATH="/tmp/install-restclient.sh.tmp"
+
+  cp $SCRIPT $TMPPATH
+  sudo $TMPPATH
+  rm -f $TMPPATH
+fi
+
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export FACTER=/opt/puppetlabs/puppet/bin/facter
 export GEM=/opt/puppetlabs/puppet/bin/gem
