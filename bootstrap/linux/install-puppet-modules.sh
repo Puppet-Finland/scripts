@@ -69,7 +69,7 @@ clone_repo() {
         cd $MODULEROOT
 
         if [ "$COMMIT" = "" ]; then
-            git checkout master 
+            git checkout master
         else
             git checkout $COMMIT
         fi
