@@ -8,10 +8,12 @@
 set -e
 
 usage() {
-    echo "Usage: install-puppet-modules.sh [-n <modulename>] [-f <puppetfile>] [-r <moduleroot>] [-m <moduledir>] [-h]"
+    echo "Usage: install-puppet-modules.sh [-u <repo url>] [ -c <commit id> ] [-n <modulename>] [-f <puppetfile>] [-r <moduleroot>] [-m <moduledir>] [-h]"
     echo
     echo "Options:"
     echo "    -n    module for which these dependencies are installed (no default value)"
+    echo "    -u    URL of the git repository that has the Puppetfile (default: \"\")"
+    echo "    -c    commit ID of the above repository (default: \"\")"
     echo "    -f    path to Puppetfile (default: /vagrant/Puppetfile)"
     echo "    -r    path to module root (default: /vagrant)"
     echo "    -m    the directory to install modules to (default: /vagrant/modules)"
@@ -22,14 +24,18 @@ usage() {
 
 # Default settings suitable for most Vagrant environments
 MODULENAME=""
+REPOURL=""
+COMMIT=""
 PUPPETFILE="/vagrant/Puppetfile"
 MODULEROOT="/vagrant"
 MODULEDIR="/vagrant/modules"
 
-while getopts 'n:p:r:m:h' arg
+while getopts 'n:u:c:p:r:m:h' arg
 do
   case $arg in
     n) MODULENAME=$OPTARG ;;
+    u) REPOURL=$OPTARG ;;
+    c) COMMIT=$OPTARG ;;
     p) PUPPETFILE=$OPTARG ;;
     r) MODULEROOT=$OPTARG ;;
     m) MODULEDIR=$OPTARG ;;
@@ -55,6 +61,23 @@ install_r10k() {
     puppet resource package r10k ensure=present provider=puppet_gem
 }
 
+clone_repo() {
+    CLONE_CWD=`pwd`
+
+    if ! [ "$REPOURL" = "" ]; then
+        git clone -n $REPOURL $MODULEROOT
+        cd $MODULEROOT
+
+        if [ "$COMMIT" = "" ]; then
+            git checkout master 
+        else
+            git checkout $COMMIT
+        fi
+    fi
+
+    cd $CLONE_CWD
+}
+
 install_modules() {
     PUPPETFILE=$1
     MODULEDIR=$2
@@ -69,5 +92,6 @@ add_root_module_link() {
 
 install_git
 install_r10k
+clone_repo
 install_modules $PUPPETFILE $MODULEDIR
 add_root_module_link $MODULEROOT $MODULENAME

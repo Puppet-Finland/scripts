@@ -5,8 +5,8 @@ systems. In this context bootstrapping means getting the node to a state where a
 real configuration management system (e.g. Puppet) can take over it's 
 configuration.
 
-These scripts are particularly useful with tools such as Vagrant for 
-provisioning virtual machines.
+These scripts are particularly useful with tools such as Vagrant, Packer or
+Terraform for provisioning virtual machines.
 
 These scripts can be run standalone for the most part. One strategy is to 
 distribute a single site-specific initialization script that fetches and runs 
