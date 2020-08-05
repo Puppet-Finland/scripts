@@ -30,6 +30,6 @@ while [ "$APT_READY" = "no" ]; do
     #
     # The "apt-get install" commands locks dpkg as well, but the last check ensures that dpkg running outside of apt does not cause havoc.
     #
-    fuser -s /var/lib/apt/lists/lock || fuser -s /var/cache/apt/archives/lock || fuser -s /var/lib/dpkg/lock || APT_READY=yes
+    fuser -s /var/lib/apt/lists/lock || fuser -s /var/cache/apt/archives/lock || fuser -s /var/lib/dpkg/lock || fuser -s /var/cache/debconf/config.dat || APT_READY=yes
     sleep 1
 done
