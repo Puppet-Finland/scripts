@@ -49,11 +49,11 @@ bolt command run "/opt/puppetlabs/bin/puppetserver ca generate --certname ${CERT
 bolt command run "tar -C /etc/puppetlabs/puppet/ssl -cf /home/${USERNAME}/puppetdb-certs.tar private_keys/${CERTNAME}.pem certs/${CERTNAME}.pem certs/ca.pem" -u "$USERNAME" -i static-inventory.yaml -t puppetmaster --run-as root --sudo-password "$SUDO_PASSWORD"
 
 mkdir -p ~/.puppetlabs/etc/bolt/openvpn/ssl
-bolt file download "/home/$USERNAME/puppetdb-certs.tar" "~/.puppetlabs/etc/bolt/$PROJECT/ssl" -u "$USERNAME" -i static-inventory.yaml -t puppetmaster
+bolt file download "/home/$USERNAME/puppetdb-certs.tar" ~/.puppetlabs/etc/bolt/"$PROJECT"/ssl -u "$USERNAME" -i static-inventory.yaml -t puppetmaster
 
 bolt command run "rm -f /home/$USERNAME/puppetdb-certs.tar" -u "$USERNAME" -i static-inventory.yaml -t puppetmaster --run-as root --sudo-password "$SUDO_PASSWORD"
 
-cd "~/.puppetlabs/etc/bolt/$PROJECT/ssl"
+cd ~/.puppetlabs/etc/bolt/"$PROJECT"/ssl
 tar -xf puppet*/puppetdb-certs.tar
 rm -rf puppet*
 cd certs
