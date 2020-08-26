@@ -41,6 +41,9 @@ CERTNAME="${USERNAME}_bolt"
 cd `dirname "$0"`/..
 WD=`pwd`
 
+# Restore inventory.yaml if a previous run had failed, leaving it in the wrong place
+test -f inventory.yaml.moved-temporarily && mv inventory.yaml.moved-temporarily inventory.yaml
+
 # Move away inventory.yaml - it will get autoloaded no matter what and can't succeed
 # until PuppetDB certificates have been configured.
 mv inventory.yaml inventory.yaml.moved-temporarily
