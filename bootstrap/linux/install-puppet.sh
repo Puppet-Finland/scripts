@@ -1,8 +1,5 @@
 #!/bin/sh
 #
-# This is a heavily stripped down version of puppet-puppetmaster/vagrant/prepare.sh
-#
-# Gist based on commit 9a429d77f11aa6d of terraform-aws_instance_wrapper
 
 # Exit on any error
 set -e
@@ -46,15 +43,18 @@ detect_osfamily() {
     if [ -f /etc/redhat-release ]; then
         OSFAMILY='redhat'
         RELEASE=$(cat /etc/redhat-release)
-	if [ "`echo $RELEASE | grep -E 7\.[0-9]+`" ]; then
+	    if [ "`echo $RELEASE | grep -E 7\.[0-9]+`" ]; then
             REDHAT_VERSION="7"
             REDHAT_RELEASE="el-7"
+	    elif [ "`echo $RELEASE | grep -E 8\.[0-9]+`" ]; then
+            REDHAT_VERSION="8"
+            REDHAT_RELEASE="el-8"
         elif [ "`echo $RELEASE | grep "(Thirty)"`" ]; then
             REDHAT_VERSION="30"
             # Puppetlabs does not have Fedora 30 packages yet
             REDHAT_RELEASE="fedora-29"
         else
-            echo "Unsupported Redhat/Centos/Fedora version. RedHat/CentOS 7 and Fedora 30 are supported."
+            echo "Unsupported Redhat/Centos/Fedora version. RedHat/CentOS 7-8 and Fedora 30 are supported."
             exit 1
         fi
     elif [ "`lsb_release -d | grep -E '(Ubuntu|Debian)'`" ]; then
