@@ -126,6 +126,9 @@ setup_puppet() {
                 #
                 # The "apt-get install" commands locks dpkg as well, but the last check ensures that dpkg running outside of apt does not cause havoc.
                 #
+                # FIXME: this fails in Azure because package "psmisc" that
+                # provides "fuser" is not installed. However, we can't really
+                # install it here because of a chicken-and-egg problem.
                 fuser -s /var/lib/apt/lists/lock || fuser -s /var/cache/apt/archives/lock || fuser -s /var/lib/dpkg/lock || APT_READY=yes
                 sleep 1
             done
