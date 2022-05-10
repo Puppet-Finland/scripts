@@ -78,6 +78,11 @@ detect_osfamily() {
 }
 
 install_dependencies() {
+    # Ensure that facts such as $::lsbdistcodename are available for Puppet
+    if [ -f /etc/redhat-release ]; then
+        yum -y install redhat-lsb-core
+    fi
+
     if [ "${REDHAT_VERSION}" = "30" ]; then
         dnf -y install libxcrypt-compat
     fi
