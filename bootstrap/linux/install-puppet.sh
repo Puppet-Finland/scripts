@@ -5,13 +5,14 @@
 set -e
 
 usage() {
-    echo "Usage: install-puppet.sh [-n <hostname>] [-e <puppet env>] [-p <puppet version>] [-s] [-h]"
+    echo "Usage: install-puppet.sh [-n <hostname>] [-e <puppet env>] [-p <puppet version>] [-d <url>] [-s] [-h]"
     echo
     echo "Options:"
     echo "    -n    hostname to set (default: do not set hostname)"
     echo "    -e    puppet agent environment (default: production)"
     echo "    -p    puppet version: 6 (default) or 7"
     echo "    -s    enable and start puppet agent (default: no)"
+    echo "    -d    puppet release package download URL (default: select automatically)"
     echo "    -h    show this help"
     echo
     exit 2
@@ -21,14 +22,16 @@ usage() {
 HOST_NAME="false"
 PUPPET_ENV="production"
 PUPPET_VERSION="6"
+PUPPET_RELEASE_DOWNLOAD_URL="autodetect"
 START_AGENT="false"
 
-while getopts 'n:e:p:sh' arg
+while getopts 'n:e:p:d:sh' arg
 do
   case $arg in
     n) HOST_NAME=$OPTARG ;;
     e) PUPPET_ENV=$OPTARG ;;
     p) PUPPET_VERSION=$OPTARG ;;
+    d) PUPPET_RELEASE_DOWNLOAD_URL=$OPTARG ;;
     s) START_AGENT="true" ;;
     h) usage ;;
   esac
@@ -93,7 +96,11 @@ setup_puppet() {
         true
     else
         if [ $REDHAT_RELEASE ]; then
-            RELEASE_URL="https://yum.puppetlabs.com/puppet${PUPPET_VERSION}/puppet${PUPPET_VERSION}-release-${REDHAT_RELEASE}.noarch.rpm"
+            if [ "$PUPPET_RELEASE_DOWNLOAD_URL" = "autodetect" ]; then
+                RELEASE_URL="https://yum.puppetlabs.com/puppet${PUPPET_VERSION}/puppet${PUPPET_VERSION}-release-${REDHAT_RELEASE}.noarch.rpm"
+            else
+                RELEASE_URL=$PUPPET_RELEASE_DOWNLOAD_URL
+            fi
             rpm -hiv "${RELEASE_URL}" || (c=$?; echo "Failed to install ${RELEASE_URL}"; (exit $c))
             yum -y install puppet-agent || (c=$?; echo "Failed to install puppet agent"; (exit $c))
             if systemctl list-unit-files --type=service | grep firewalld; then
@@ -103,10 +110,18 @@ setup_puppet() {
             fi
         else
             if [ $UBUNTU_VERSION ]; then
-                APT_URL="https://apt.puppetlabs.com/puppet${PUPPET_VERSION}-release-${UBUNTU_VERSION}.deb"
+                if [ "$PUPPET_RELEASE_DOWNLOAD_URL" = "autodetect" ]; then
+                    APT_URL="https://apt.puppetlabs.com/puppet${PUPPET_VERSION}-release-${UBUNTU_VERSION}.deb"
+                else
+                    APT_URL=$PUPPET_RELEASE_DOWNLOAD_URL
+                fi
             fi
             if [ $DEBIAN_VERSION ]; then
-                APT_URL="https://apt.puppetlabs.com/puppet${PUPPET_VERSION}-release-${DEBIAN_VERSION}.deb"
+                if [ "$PUPPET_RELEASE_DOWNLOAD_URL" = "autodetect" ]; then
+                    APT_URL="https://apt.puppetlabs.com/puppet${PUPPET_VERSION}-release-${DEBIAN_VERSION}.deb"
+                else
+                    APT_URL=$PUPPET_RELEASE_DOWNLOAD_URL
+                fi
             fi
             # https://serverfault.com/questions/500764/dpkg-reconfigure-unable-to-re-open-stdin-no-file-or-directory
             export DEBIAN_FRONTEND=noninteractive
