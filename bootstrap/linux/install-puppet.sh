@@ -10,7 +10,7 @@ usage() {
     echo "Options:"
     echo "    -n    hostname to set (default: do not set hostname)"
     echo "    -e    puppet agent environment (default: production)"
-    echo "    -p    puppet version: 6 (default) or 7"
+    echo "    -p    puppet version: 7 (default). Version 6 is no longer supported."
     echo "    -s    enable and start puppet agent (default: no)"
     echo "    -d    puppet release package download URL (default: select automatically)"
     echo "    -h    show this help"
@@ -21,7 +21,7 @@ usage() {
 # Default settings
 HOST_NAME="false"
 PUPPET_ENV="production"
-PUPPET_VERSION="6"
+PUPPET_VERSION="7"
 PUPPET_RELEASE_DOWNLOAD_URL="autodetect"
 START_AGENT="false"
 
@@ -55,12 +55,15 @@ detect_osfamily() {
 	    elif [ "`echo $RELEASE | grep -E 8\.[0-9]+`" ]; then
             REDHAT_VERSION="8"
             REDHAT_RELEASE="el-8"
+	    elif [ "`echo $RELEASE | grep -E 9\.[0-9]+`" ]; then
+            REDHAT_VERSION="9"
+            REDHAT_RELEASE="el-9"
         elif [ "`echo $RELEASE | grep "(Thirty)"`" ]; then
             REDHAT_VERSION="30"
             # Puppetlabs does not have Fedora 30 packages yet
             REDHAT_RELEASE="fedora-29"
         else
-            echo "Unsupported Redhat/Centos/Fedora version. RedHat/CentOS 7-8 and Fedora 30 are supported."
+            echo "Unsupported Redhat/Centos/Fedora version. Red Hat 7-9 and Fedora 30 are supported."
             exit 1
         fi
     elif [ "`lsb_release -d | grep -E '(Ubuntu|Debian)'`" ]; then
@@ -83,7 +86,13 @@ detect_osfamily() {
 install_dependencies() {
     # Ensure that facts such as $::lsbdistcodename are available for Puppet
     if [ -f /etc/redhat-release ]; then
-        yum -y install redhat-lsb-core
+	# RHEL9 will never have redhat-lsb-core, according to
+	#
+	# https://access.redhat.com/solutions/6960807
+	#
+	if ! [ "${REDHAT_VERSION}" = "9" ]; then
+            yum -y install redhat-lsb-core
+	fi
     fi
 
     if [ "${REDHAT_VERSION}" = "30" ]; then
@@ -97,7 +106,7 @@ setup_puppet() {
     else
         if [ $REDHAT_RELEASE ]; then
             if [ "$PUPPET_RELEASE_DOWNLOAD_URL" = "autodetect" ]; then
-                RELEASE_URL="https://yum.puppetlabs.com/puppet${PUPPET_VERSION}/puppet${PUPPET_VERSION}-release-${REDHAT_RELEASE}.noarch.rpm"
+                RELEASE_URL="https://yum.puppetlabs.com/puppet${PUPPET_VERSION}-release-${REDHAT_RELEASE}.noarch.rpm"
             else
                 RELEASE_URL=$PUPPET_RELEASE_DOWNLOAD_URL
             fi
