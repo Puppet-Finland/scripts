@@ -5,13 +5,14 @@
 set -e
 
 usage() {
-    echo "Usage: install-puppet.sh [-n <hostname>] [-e <puppet env>] [-p <puppet version>] [-d <url>] [-s] [-h]"
+    echo "Usage: install-puppet.sh [-n <hostname>] [-e <puppet env>] [-p <puppet version>] [-d <url>] [-s] [-6] [-h]"
     echo
     echo "Options:"
     echo "    -n    hostname to set (default: do not set hostname)"
     echo "    -e    puppet agent environment (default: production)"
     echo "    -p    puppet version: 7 (default). Version 6 is no longer supported."
     echo "    -s    enable and start puppet agent (default: no)"
+    echo "    -6    use IPv6 only for outbound connections (default: no)"
     echo "    -d    puppet release package download URL (default: select automatically)"
     echo "    -h    show this help"
     echo
@@ -24,8 +25,9 @@ PUPPET_ENV="production"
 PUPPET_VERSION="7"
 PUPPET_RELEASE_DOWNLOAD_URL="autodetect"
 START_AGENT="false"
+IPV6_ONLY="false"
 
-while getopts 'n:e:p:d:sh' arg
+while getopts 'n:e:p:d:s6h' arg
 do
   case $arg in
     n) HOST_NAME=$OPTARG ;;
@@ -33,6 +35,7 @@ do
     p) PUPPET_VERSION=$OPTARG ;;
     d) PUPPET_RELEASE_DOWNLOAD_URL=$OPTARG ;;
     s) START_AGENT="true" ;;
+    6) IPV6_ONLY="true" ;;
     h) usage ;;
   esac
 done
@@ -49,13 +52,13 @@ detect_osfamily() {
     if [ -f /etc/redhat-release ]; then
         OSFAMILY='redhat'
         RELEASE=$(cat /etc/redhat-release)
-	    if [ "`echo $RELEASE | grep -E 7\.[0-9]+`" ]; then
+        if [ "`echo $RELEASE | grep -E 7\.[0-9]+`" ]; then
             REDHAT_VERSION="7"
             REDHAT_RELEASE="el-7"
-	    elif [ "`echo $RELEASE | grep -E 8\.[0-9]+`" ]; then
+        elif [ "`echo $RELEASE | grep -E 8\.[0-9]+`" ]; then
             REDHAT_VERSION="8"
             REDHAT_RELEASE="el-8"
-	    elif [ "`echo $RELEASE | grep -E 9\.[0-9]+`" ]; then
+        elif [ "`echo $RELEASE | grep -E 9\.[0-9]+`" ]; then
             REDHAT_VERSION="9"
             REDHAT_RELEASE="el-9"
         elif [ "`echo $RELEASE | grep "(Thirty)"`" ]; then
@@ -83,16 +86,28 @@ detect_osfamily() {
     fi
 }
 
+force_ipv6() {
+    if [ "$IPV6_ONLY" = "true" ]; then
+        if [ -r "/etc/dnf/dnf.conf" ]; then
+            echo "ip_resolve=6" >> /etc/dnf/dnf.conf
+        elif [ -r /etc/yum.conf ]; then
+            echo "ip_resolve=6" >> /etc/yum.conf
+        else
+            echo "NOTICE: -6 (IPV6_ONLY) is a no-op on non-Red Hat operating systems"
+        fi
+    fi
+}
+
 install_dependencies() {
     # Ensure that facts such as $::lsbdistcodename are available for Puppet
     if [ -f /etc/redhat-release ]; then
-	# RHEL9 will never have redhat-lsb-core, according to
-	#
-	# https://access.redhat.com/solutions/6960807
-	#
-	if ! [ "${REDHAT_VERSION}" = "9" ]; then
+        # RHEL9 will never have redhat-lsb-core, according to
+        #
+        # https://access.redhat.com/solutions/6960807
+        #
+        if ! [ "${REDHAT_VERSION}" = "9" ]; then
             yum -y install redhat-lsb-core
-	fi
+        fi
     fi
 
     if [ "${REDHAT_VERSION}" = "30" ]; then
@@ -184,6 +199,7 @@ if [ "${HOST_NAME}" != "false" ]; then
     set_hostname $HOST_NAME
 fi
 detect_osfamily
+force_ipv6
 install_dependencies
 setup_puppet
 set_puppet_agent_environment $PUPPET_ENV
